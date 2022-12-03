@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Data;
 using Mono.Data.Sqlite;
 using UnityEngine;
 
+[DefaultExecutionOrder(0)]
 public class SQLiteHandler : MonoBehaviour
 {
     private static string dbPath = "";
@@ -11,6 +13,106 @@ public class SQLiteHandler : MonoBehaviour
         if (dbPath == "")
         {
             dbPath = "URI=file:" + Application.dataPath + "/Dbs/minecraftDb.db";
+        }
+    }
+
+    public static bool CheckForCreatedWorld()
+    {
+        using (SqliteConnection connection = new SqliteConnection(dbPath))
+        {
+            connection.Open();
+
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                command.CommandText = "SELECT HasWorld FROM GAME_INFO;";
+
+                int result = -1;
+                SqliteDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    result = reader.GetInt32(0);
+                }
+
+                return result > 0;
+            }
+        }
+    }
+
+    public static int SetHasWorldValue(bool value)
+    {
+        int parsedBool = value ? 1 : 0;
+
+        using (SqliteConnection connection = new SqliteConnection(dbPath))
+        {
+            connection.Open();
+
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                command.CommandText = @"UPDATE GAME_INFO
+                                        SET
+                                            HasWorld = @ParsedBool;";
+
+                command.Parameters.Add(new SqliteParameter
+                {
+                    ParameterName = "ParsedBool",
+                    Value = parsedBool
+                });
+
+                return command.ExecuteNonQuery();
+            }
+        }
+    }
+
+    public static int GetWorldBlockCount()
+    {
+        using (SqliteConnection connection = new SqliteConnection(dbPath))
+        {
+            connection.Open();
+
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                command.CommandText = "SELECT BlocksCount FROM GAME_INFO;";
+
+                int result = -1;
+                SqliteDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    result = reader.GetInt32(0);
+                }
+
+                return result;
+            }
+        }
+    }
+
+    public static void SetBlockCount(int value)
+    {
+        using (SqliteConnection connection = new SqliteConnection(dbPath))
+        {
+            connection.Open();
+
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                command.CommandText = @"UPDATE GAME_INFO
+                                        SET
+                                            BlocksCount = @Value;";
+
+                command.Parameters.Add(new SqliteParameter
+                {
+                    ParameterName = "Value",
+                    Value = value
+                });
+
+                command.ExecuteNonQuery();
+            }
         }
     }
 
@@ -133,5 +235,67 @@ public class SQLiteHandler : MonoBehaviour
                 Debug.LogFormat("Block deletion with id {0}: {1}", blockId, result);
             }
         }
+    }
+
+    public static Vector3 GetBlock(int blockId)
+    {
+        Vector3 result = Vector3.zero;
+
+        using (SqliteConnection connection = new SqliteConnection(dbPath))
+        {
+            connection.Open();
+
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                #region X
+                command.CommandText = @"SELECT BlockPosX FROM BLOCK 
+                                        WHERE BlockID = $idX;";
+
+                command.Parameters.AddWithValue("$idX", blockId);
+                int x = 0;
+                SqliteDataReader readerX = command.ExecuteReader();
+                while (readerX.Read())
+                {
+                    x = readerX.GetInt32(0);
+                }
+                readerX.Close();
+                #endregion
+
+                #region Y
+                command.CommandText = @"SELECT BlockPosY FROM BLOCK 
+                                        WHERE BlockID = $idY;";
+
+                command.Parameters.AddWithValue("$idY", blockId);
+                int y = 0;
+                SqliteDataReader readerY = command.ExecuteReader();
+                while (readerY.Read())
+                {
+                    y = readerY.GetInt32(0);
+                }
+                readerY.Close();
+                #endregion
+
+                #region Z
+                command.CommandText = @"SELECT BlockPosZ FROM BLOCK 
+                                        WHERE BlockID = $idZ;";
+
+                command.Parameters.AddWithValue("$idZ", blockId);
+
+                int z = 0;
+                SqliteDataReader readerZ = command.ExecuteReader();
+                while (readerZ.Read())
+                {
+                    z = readerZ.GetInt32(0);
+                }
+                readerZ.Close();
+                #endregion
+
+                result.Set(x, y, z);
+            }
+        }
+
+        return result;
     }
 }

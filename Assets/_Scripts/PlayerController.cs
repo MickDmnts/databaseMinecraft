@@ -43,8 +43,8 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.visible = false;
 
         CacheComponents();
     }
@@ -90,7 +90,7 @@ public class PlayerController : MonoBehaviour
         direction = transform.forward * inputVer + transform.right * inputHor;
         direction *= playerSpeed + sprintBoost;
 
-        direction.y = -gravity;
+        //direction.y = -gravity;
 
         //Moving the character
         movement = direction * Time.deltaTime;

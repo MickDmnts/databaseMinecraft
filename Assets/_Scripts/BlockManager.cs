@@ -5,12 +5,12 @@ public class BlockManager : MonoBehaviour
 {
     public static BlockManager S;
 
+    [SerializeField] List<GameObject> blocks;
+
     private void Awake()
     {
         S = this;
     }
-
-    [SerializeField] List<GameObject> blocks;
 
     public GameObject GetBlockByType(BlockType blockType)
     {
