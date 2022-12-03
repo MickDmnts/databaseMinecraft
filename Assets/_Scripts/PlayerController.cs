@@ -90,7 +90,7 @@ public class PlayerController : MonoBehaviour
         direction = transform.forward * inputVer + transform.right * inputHor;
         direction *= playerSpeed + sprintBoost;
 
-        //direction.y = -gravity;
+        direction.y = -gravity;
 
         //Moving the character
         movement = direction * Time.deltaTime;

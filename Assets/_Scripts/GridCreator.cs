@@ -8,11 +8,12 @@ public class GridCreator : MonoBehaviour
     [Header("Set in inspector")]
     [SerializeField] int worldSize;
     [SerializeField] float tileSize;
+    [SerializeField] Transform blocksParent;
     [SerializeField] GameObject stonePrefab;
 
     List<Vector3> blocks;
-
     int idCount = 0;
+
     CancellationTokenSource cancellationTokenSource;
 
     private void Awake()
@@ -26,12 +27,12 @@ public class GridCreator : MonoBehaviour
             CreateWorld();
     }
 
-    public void CreateWorld()
+    public async void CreateWorld()
     {
         SQLiteHandler.CreateNewBlockTable();
         SQLiteHandler.SetHasWorldValue(true);
 
-        Task task = CreateNewWorld(cancellationTokenSource.Token);
+        await CreateNewWorld(cancellationTokenSource.Token);
     }
 
     async Task CreateNewWorld(CancellationToken token)
@@ -50,7 +51,7 @@ public class GridCreator : MonoBehaviour
                 GameObject block = Instantiate(stonePrefab);
                 block.transform.position = new Vector3(blockPos.x * tileSize, blockPos.y * tileSize, blockPos.z * tileSize);
                 block.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
-                block.transform.SetParent(transform, true);
+                block.transform.SetParent(blocksParent, true);
 
                 block.GetComponent<BlockInstance>().SetBlockID(idCount++);
 
@@ -87,13 +88,14 @@ public class GridCreator : MonoBehaviour
             GameObject block = Instantiate(stonePrefab);
             block.transform.position = new Vector3(blockPos.x * tileSize, blockPos.y * tileSize, blockPos.z * tileSize);
             block.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
-            block.transform.SetParent(transform, true);
+            block.transform.SetParent(blocksParent, true);
 
             block.GetComponent<BlockInstance>().SetBlockID(idCount++);
 
             blocks.Add(blockPos);
 
             SQLiteHandler.AddBlockToWorld((int)blockPos.x, (int)blockPos.y, (int)blockPos.z);
+
             await Task.Delay(5);
         }
     }

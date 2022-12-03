@@ -17,7 +17,11 @@ public class BlockInstance : MonoBehaviour, IInteractable
     public void PlaceBlock(BlockType blockType)
     {
         GameObject newBlock = Instantiate(BlockManager.S.GetBlockByType(blockType));
+
+        //Calculate normal ray hit here and send info through the interaction.
         newBlock.transform.position = transform.position + transform.up;
+
+        newBlock.transform.SetParent(BlockManager.S.transform, true);
 
         newBlock.GetComponent<BlockInstance>().SetBlockID(blockID + 1);
 

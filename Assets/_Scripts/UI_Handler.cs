@@ -15,14 +15,14 @@ public class UI_Handler : MonoBehaviour
 
         deleteButton.interactable = true;
 
-        /*if (SQLiteHandler.CheckForCreatedWorld())
+        if (SQLiteHandler.CheckForCreatedWorld())
         {
             loadButton.interactable = true;
         }
         else
         {
             loadButton.interactable = false;
-        }*/
+        }
     }
 
     void LoadWorld()
