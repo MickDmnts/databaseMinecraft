@@ -6,9 +6,7 @@ using UnityEngine;
 * Dynamically changed: These variables are changed throughout the game.
 * 
 * [Class Flow]
-* 1. The Update() method of this class creates a ray and checks for IInteractable ray hits, in case it finds one it enables a
-*   UI prompt to prompt the user to press a button. If pressed, it calls the hit gameObjects Interact() method through the 
-*   IInteractable interface.
+* 
 */
 
 public class EnvironmentInteractions : MonoBehaviour
@@ -21,7 +19,6 @@ public class EnvironmentInteractions : MonoBehaviour
 
     private void Awake()
     {
-        //Cache the gameObject marked with the "PlayerCamera" tag.
         playerCamera = Camera.main;
     }
 

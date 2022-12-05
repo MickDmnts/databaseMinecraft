@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
 
     [Header("Move Stats")]
     [SerializeField] float playerSpeed = 10f;
-    [SerializeField] float sprintMultiplier;
 
     CharacterController charCtrl;
     Transform mainCam;
@@ -37,14 +36,12 @@ public class PlayerController : MonoBehaviour
     float mouseInputX = 0;
     float mouseInputY = 0;
     float mouseXRotate = 0;
-
-    float sprintBoost = 0;
     #endregion
 
     private void Awake()
     {
         //Cursor.lockState = CursorLockMode.Locked;
-        //Cursor.visible = false;
+        //Cursor.visible = true;
 
         CacheComponents();
     }
@@ -76,21 +73,17 @@ public class PlayerController : MonoBehaviour
         //Rotation
         transform.Rotate(0, mouseInputX * mouseSensitivity * Time.deltaTime, 0);
 
-        if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            sprintBoost = sprintMultiplier;
-        }
-
-        if (Input.GetKeyUp(KeyCode.LeftShift))
-        {
-            sprintBoost = 0;
-        }
-
         //Construct Direction Vectors
-        direction = transform.forward * inputVer + transform.right * inputHor;
-        direction *= playerSpeed + sprintBoost;
+        direction = (transform.forward * inputVer + transform.right * inputHor) * playerSpeed;
 
-        direction.y = -gravity;
+        if (Input.GetKey(KeyCode.LeftControl))
+        {
+            direction.y = -gravity;
+        }
+        else if (Input.GetKey(KeyCode.Space))
+        {
+            direction.y = gravity;
+        }
 
         //Moving the character
         movement = direction * Time.deltaTime;

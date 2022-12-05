@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct BlockInfo
+{
+    public Vector3 Position;
+    public int BlockType;
+}
+
 public class BlockManager : MonoBehaviour
 {
     public static BlockManager S;
@@ -14,20 +20,7 @@ public class BlockManager : MonoBehaviour
 
     public GameObject GetBlockByType(BlockType blockType)
     {
-        GameObject temp = null;
-
-        switch (blockType)
-        {
-            case BlockType.Dirt:
-                temp = blocks[0];
-                break;
-
-            case BlockType.Stone:
-                temp = blocks[1];
-                break;
-        }
-
-        return temp;
+        return blocks[(int)blockType];
     }
 
     private void OnDestroy()

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,6 @@ public class GridCreator : MonoBehaviour
     [SerializeField] GameObject stonePrefab;
 
     List<Vector3> blocks;
-    int idCount = 0;
 
     CancellationTokenSource cancellationTokenSource;
 
@@ -24,15 +24,30 @@ public class GridCreator : MonoBehaviour
     private void Start()
     {
         if (!SQLiteHandler.CheckForCreatedWorld())
+        {
             CreateWorld();
+        }
+        else
+        {
+            LoadPastWorld();
+        }
     }
 
     public async void CreateWorld()
     {
-        SQLiteHandler.CreateNewBlockTable();
-        SQLiteHandler.SetHasWorldValue(true);
+        Task buildTask = CreateNewWorld(cancellationTokenSource.Token);
 
-        await CreateNewWorld(cancellationTokenSource.Token);
+        try
+        {
+            SQLiteHandler.CreateNewBlockTable();
+            SQLiteHandler.SetHasWorldValue(true);
+
+            await buildTask;
+        }
+        catch (Exception e)
+        {
+            Debug.LogFormat("New world canceled {0}", e);
+        }
     }
 
     async Task CreateNewWorld(CancellationToken token)
@@ -53,22 +68,33 @@ public class GridCreator : MonoBehaviour
                 block.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
                 block.transform.SetParent(blocksParent, true);
 
-                block.GetComponent<BlockInstance>().SetBlockID(idCount++);
+                BlockInstance blockInstance = block.GetComponent<BlockInstance>();
+                blockInstance.SetBlockID(SQLiteHandler.GetWorldBlockCount());
 
                 blocks.Add(blockPos);
 
-                SQLiteHandler.AddBlockToWorld((int)blockPos.x, (int)blockPos.y, (int)blockPos.z);
+                SQLiteHandler.AddBlockToWorld((int)blockPos.x, (int)blockPos.y, (int)blockPos.z, (int)blockInstance.GetBlockType(), blockInstance.GetBlockID());
+                SQLiteHandler.SetWorldBlockCount(SQLiteHandler.GetWorldBlockCount() + 1);
 
-                await Task.Delay(5);
+                await Task.Delay(1, token);
             }
         }
-
-        SQLiteHandler.SetBlockCount(idCount);
     }
 
     public async void LoadPastWorld()
     {
-        await LoadWorldData(cancellationTokenSource.Token);
+        Task buildTask = LoadWorldData(cancellationTokenSource.Token);
+
+        await buildTask;
+
+        try
+        {
+            await buildTask;
+        }
+        catch (Exception e)
+        {
+            Debug.LogFormat("Past world canceled {0}", e);
+        }
     }
 
     async Task LoadWorldData(CancellationToken token)
@@ -76,27 +102,52 @@ public class GridCreator : MonoBehaviour
         blocks = new List<Vector3>();
 
         int blockCount = SQLiteHandler.GetWorldBlockCount();
-        Debug.Log(blockCount);
 
-        for (int i = 0; i < blockCount; i++)
+        for (int i = 1; i != blockCount; i++)
         {
             if (token.IsCancellationRequested) break;
 
-            Vector3 blockPos = SQLiteHandler.GetBlock(i);
+            BlockInfo blockInfo = SQLiteHandler.GetBlockInfo(i);
+            Vector3 blockPos = blockInfo.Position;
 
             //Create world block
-            GameObject block = Instantiate(stonePrefab);
+            GameObject block = Instantiate(BlockManager.S.GetBlockByType((BlockType)blockInfo.BlockType));
             block.transform.position = new Vector3(blockPos.x * tileSize, blockPos.y * tileSize, blockPos.z * tileSize);
             block.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
             block.transform.SetParent(blocksParent, true);
 
-            block.GetComponent<BlockInstance>().SetBlockID(idCount++);
+            BlockInstance blockInstance = block.GetComponent<BlockInstance>();
+            blockInstance.SetBlockID(i);
 
             blocks.Add(blockPos);
 
-            SQLiteHandler.AddBlockToWorld((int)blockPos.x, (int)blockPos.y, (int)blockPos.z);
-
-            await Task.Delay(5);
+            await Task.Delay(1, token);
         }
+    }
+
+    public void ResetDatabaseWorldState()
+    {
+        SQLiteHandler.SetHasWorldValue(false);
+        SQLiteHandler.SetWorldBlockCount(0);
+        SQLiteHandler.CreateNewBlockTable();
+
+        cancellationTokenSource.Cancel();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.ExitPlaymode();
+#endif
+
+#if UNITY_STANDALONE && !UNITY_EDITOR
+        SQLiteHandler.CreateNewLocalTables();
+        Application.Quit();
+#endif
+    }
+
+    private void OnDisable()
+    {
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+
+        cancellationTokenSource = new CancellationTokenSource();
     }
 }

@@ -1,7 +1,9 @@
 public enum BlockType
 {
-    Dirt,
-    Stone,
+    None = -1,
+
+    Dirt = 0,
+    Stone = 1,
 }
 
 public interface IInteractable
